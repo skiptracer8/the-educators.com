@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Result Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* ========== RESET & GLOBAL ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #e8ecf5, #d4dde8);
+            min-height: 100vh;
+            font-family: 'Nunito', sans-serif;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* ========== LOOKUP FORM ========== */
+        .lookup-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(15,32,68,0.18);
+            overflow: hidden;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .lookup-header {
+            background: #0f2044;
+            padding: 24px 28px;
+            text-align: center;
+            color: white;
+        }
+        .lookup-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+        }
+        .lookup-header p {
+            color: #f0d070;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+        .lookup-form {
+            padding: 24px 28px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .lf-field {
+            flex: 1;
+            min-width: 140px;
+        }
+        .lf-field label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .lf-field input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #0f2044;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .lf-field input:focus {
+            border-color: #c9a227;
+        }
+        .search-btn {
+            padding: 10px 24px;
+            background: #c9a227;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .search-btn:hover {
+            background: #a88020;
+            transform: translateY(-1px);
+        }
+        .not-found {
+            padding: 20px 28px;
+            text-align: center;
+            color: #c0392b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: #fdecea;
+            border-radius: 0 0 16px 16px;
+            display: none;
+        }
+        .loading {
+            padding: 20px 28px;
+            text-align: center;
+            color: #0f2044;
+            font-weight: 600;
+            background: #f0f4ff;
+            border-radius: 0 0 16px 16px;
+            display: none;
+        }
+
+        /* ========== RESULT CARD ========== */
+        .card-wrapper {
+            width: 100%;
+            max-width: 820px;
+            display: none;
+        }
+        .result-card {
+            background: #fffdf4;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(15,32,68,0.18);
+            border: 2px solid #d4af37;
+            position: relative;
+        }
+        .stripe {
+            height: 7px;
+            background: repeating-linear-gradient(90deg, #c9a227 0 60px, #0f2044 60px 120px);
+        }
+        .card-header {
+            background: #0f2044;
+            padding: 20px 26px 16px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card-header::after {
+            content: '';
+            position: absolute;
+            right: -60px;
+            top: -60px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(201,162,39,0.07);
+        }
+        .school-logo {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            background: #fff; /* fallback background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 3px solid #f0d070;
+            overflow: hidden;
+        }
+        .school-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .school-info {
+            flex: 1;
+        }
+        .school-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+        .school-sub {
+            color: #f0d070;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+        .report-badge {
+            background: linear-gradient(135deg, #c9a227, #8b6914);
+            color: white;
+            padding: 7px 16px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .info-band {
+            background: linear-gradient(90deg, #1a2f5e, #0f2044);
+            padding: 11px 26px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 26px;
+            align-items: center;
+        }
+        .info-band .field {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .info-band .lbl {
+            color: #f0d070;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+        }
+        .info-band .val {
+            color: white;
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #e8e0cc;
+        }
+        .meta-cell {
+            flex: 1;
+            min-width: 130px;
+            padding: 9px 18px;
+            border-right: 1px solid #e8e0cc;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .meta-cell:last-child {
+            border-right: none;
+        }
+        .meta-cell .lbl2 {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+        }
+        .meta-cell .val2 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f2044;
+        }
+        .table-section {
+            padding: 16px 22px;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+            color: #0f2044;
+            margin-bottom: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, #c9a227, transparent);
+        }
+        table.marks-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .marks-table thead tr {
+            background: #0f2044;
+            color: white;
+        }
+        .marks-table thead th {
+            padding: 9px 10px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.68rem;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .marks-table thead th:first-child {
+            text-align: left;
+            border-radius: 6px 0 0 0;
+        }
+        .marks-table thead th:last-child {
+            border-radius: 0 6px 0 0;
+        }
+        .marks-table tbody tr:nth-child(odd) {
+            background: #f7f4ec;
+        }
+        .marks-table tbody tr:nth-child(even) {
+            background: white;
+        }
+        .marks-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e8e0cc;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .marks-table td:first-child {
+            text-align: left;
+            font-weight: 700;
+            color: #0f2044;
+        }
+        .sno {
+            color: #aaa;
+            font-weight: 600;
+            font-size: 0.72rem;
+        }
+        .grade-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+        .grade-A { background: #dcfce7; color: #166534; }
+        .grade-B { background: #dbeafe; color: #1e40af; }
+        .grade-C { background: #fef9c3; color: #854d0e; }
+        .grade-D { background: #fee2e2; color: #991b1b; }
+        .grade-F { background: #f3f4f6; color: #6b7280; }
+        .status-pass {
+            color: #1a7a4a;
+            font-weight: 800;
+            font-size: 0.72rem;
+        }
+        .status-fail {
+            color: #c0392b;
+            font-weight: 800;
+            font-size: 0.72rem;
+        }
+        .totals-strip {
+            display: flex;
+            flex-wrap: wrap;
+            background: #0f2044;
+            color: white;
+            padding: 12px 22px;
+            margin: 0 22px 16px;
+            border-radius: 10px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tot-item {
+            text-align: center;
+            flex: 1;
+            min-width: 80px;
+        }
+        .tot-item .t-lbl {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #f0d070;
+        }
+        .tot-item .t-val {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: white;
+        }
+        .tot-item .t-val.gold {
+            color: #f0d070;
+        }
+        .result-banner {
+            margin: 0 22px 14px;
+            border-radius: 10px;
+            padding: 11px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+        .banner-pass {
+            background: #e6f5ee;
+            color: #1a7a4a;
+            border-left: 5px solid #1a7a4a;
+        }
+        .banner-fail {
+            background: #fdecea;
+            color: #c0392b;
+            border-left: 5px solid #c0392b;
+        }
+        .bottom-section {
+            display: flex;
+            gap: 14px;
+            padding: 0 22px 20px;
+            flex-wrap: wrap;
+        }
+        .remarks-box, .sig-box {
+            flex: 1;
+            min-width: 180px;
+            border: 1px dashed #c9a227;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .box-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #c9a227;
+            margin-bottom: 6px;
+        }
+        .remarks-box .rem-text {
+            font-size: 0.8rem;
+            color: #444;
+            font-style: italic;
+        }
+        .sig-line {
+            border-bottom: 1px solid #aaa;
+            width: 80%;
+            margin: 18px auto 4px;
+            display: block;
+        }
+        .sig-label {
+            text-align: center;
+            font-size: 0.68rem;
+            color: #888;
+        }
+        .watermark {
+            position: absolute;
+            right: 16px;
+            bottom: 70px;
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            color: rgba(15,32,68,0.04);
+            pointer-events: none;
+            user-select: none;
+            letter-spacing: -4px;
+            font-weight: 900;
+        }
+
+        /* ========== ACTION BUTTONS ========== */
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #0f2044;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1a3a7a;
+            transform: translateY(-1px);
+        }
+        .btn-gold {
+            background: #c9a227;
+            color: white;
+        }
+        .btn-gold:hover {
+            background: #a88020;
+            transform: translateY(-1px);
+        }
+        .btn-green {
+            background: #1a7a4a;
+            color: white;
+        }
+        .btn-green:hover {
+            background: #145e39;
+            transform: translateY(-1px);
+        }
+        .btn-outline {
+            background: white;
+            color: #0f2044;
+            border: 2px solid #0f2044;
+        }
+        .btn-outline:hover {
+            background: #f0f4ff;
+        }
+
+        /* ========== PRINT STYLES ========== */
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .lookup-card, .actions { display: none; }
+            .card-wrapper { display: block !important; max-width: 100%; }
+            .result-card { box-shadow: none; border: 1px solid #ccc; border-radius: 0; }
+            @page { size: A4; margin: 10mm; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="lookup-card">
+    <div class="lookup-header">
+        <h2>📋 Student Result Portal</h2>
+        <p>Enter your class and roll number to view your result</p>
+    </div>
+    <div class="lookup-form">
+        <div class="lf-field">
+            <label>Class</label>
+            <input id="lkp_class" placeholder="e.g. 8th, 10th" value="8th">
+        </div>
+        <div class="lf-field">
+            <label>Roll Number</label>
+            <input id="lkp_roll" placeholder="e.g. 05" onkeydown="if(event.key==='Enter')doLookup()">
+        </div>
+        <button class="search-btn" onclick="doLookup()">🔍 Search Result</button>
+    </div>
+    <div id="loadingMsg" class="loading">🔄 Loading data from Google Sheet...</div>
+    <div id="lookupMsg" class="not-found"></div>
+</div>
+
+<div class="card-wrapper" id="cardWrapper">
+    <div class="result-card" id="resultCard">
+        <div class="watermark">RESULT</div>
+        <div class="stripe"></div>
+        <div class="card-header">
+            <div class="school-logo" id="cardLogo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Punjab_Education_Foundation_logo.png" alt="School Logo">
+            </div>
+            <div class="school-info">
+                <div class="school-name" id="cardSchoolName">The National Educators school system 335 W/B</div>
+                <div class="school-sub">Academic Result Card</div>
+            </div>
+            <div class="report-badge" id="cardExamBadge">Annual Exam</div>
+        </div>
+        <div class="info-band">
+            <div class="field"><span class="lbl">Student:</span><span class="val" id="cardStudentName">—</span></div>
+            <div class="field"><span class="lbl">Father:</span><span class="val" id="cardFatherName">—</span></div>
+            <div class="field"><span class="lbl">Roll No:</span><span class="val" id="cardRoll">—</span></div>
+        </div>
+        <div class="meta-row">
+            <div class="meta-cell"><span class="lbl2">Class</span><span class="val2" id="cardClass">—</span></div>
+            <div class="meta-cell"><span class="lbl2">Session</span><span class="val2" id="cardSession">—</span></div>
+            <div class="meta-cell"><span class="lbl2">Exam</span><span class="val2" id="cardExam">—</span></div>
+            <div class="meta-cell"><span class="lbl2">Date</span><span class="val2" id="cardDate">—</span></div>
+        </div>
+        <div class="table-section">
+            <div class="section-title">Subject-wise Marks</div>
+            <table class="marks-table">
+                <thead>
+                    <tr>
+                        <th>#</th><th style="text-align:left">Subject</th>
+                        <th>Total</th><th>Obtained</th><th>Pass (40%)</th><th>Grade</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="cardMarksBody"></tbody>
+            </table>
+        </div>
+        <div class="totals-strip">
+            <div class="tot-item"><div class="t-lbl">Total Marks</div><div class="t-val" id="cTotal">—</div></div>
+            <div class="tot-item"><div class="t-lbl">Obtained</div><div class="t-val gold" id="cObtained">—</div></div>
+            <div class="tot-item"><div class="t-lbl">Percentage</div><div class="t-val gold" id="cPct">—</div></div>
+            <div class="tot-item"><div class="t-lbl">Grade</div><div class="t-val gold" id="cGrade">—</div></div>
+            <div class="tot-item"><div class="t-lbl">Position</div><div class="t-val gold" id="cPos">—</div></div>
+        </div>
+        <div class="result-banner banner-pass" id="cBanner">
+            <span id="cBannerIcon">🎓</span>
+            <span id="cBannerText">Result</span>
+            <span id="cBannerSub" style="font-size:.78rem;font-weight:600;opacity:.7"></span>
+        </div>
+        <div class="bottom-section">
+            <div class="remarks-box">
+                <div class="box-title">📝 Teacher's Remarks</div>
+                <div class="rem-text" id="cardRemarks">—</div>
+            </div>
+            <div class="sig-box">
+                <div class="box-title">✍️ Class Teacher</div>
+                <span class="sig-line"></span><div class="sig-label">Signature & Stamp</div>
+            </div>
+            <div class="sig-box">
+                <div class="box-title">🏫 Principal</div>
+                <span class="sig-line"></span><div class="sig-label">Signature & Stamp</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="actions" id="cardActions" style="display:none">
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Print (A4)</button>
+    <button class="btn btn-gold" onclick="exportPDF()">📄 Export PDF</button>
+    <button class="btn btn-green" onclick="exportImage()">🖼️ Export Image</button>
+    <button class="btn btn-outline" onclick="resetLookup()">🔍 Search Again</button>
+</div>
+
+<script>
+    // ========== CONFIGURATION ==========
+     const SHEET_ID = "16-I-m6-nSqqEwwuX3onCL_ExlWtirE6Tgoh0f35ZgvM";      // <-- PASTE YOUR SHEET ID
+    const API_KEY = "AIzaSyCKbJZPomNDZ1N1HhLJ2MpSAHqd_Z58PnI";        // <-- PASTE YOUR API KEY
+    const RANGE = "Sheet1!A1:Z";           // <-- PASTE YOUR API KEY
+                  // adjust sheet name if needed
+
+    // School info (fixed)
+    const schoolConfig = {
+        schoolName: "The National Educators school system 335 W/B",
+        session: "2024-2025",
+        examType: "Annual Exam",
+        examDate: "2025-03-15",     // YYYY-MM-DD
+        passPercentage: 40           // 40% passing marks
+    };
+
+    // Subject list (order must match columns in Google Sheet after "Remarks")
+    const SUBJECTS = [
+        { name: "English", total: 100 },
+        { name: "Urdu", total: 100 },
+        { name: "Math", total: 100 },
+        { name: "Science", total: 100 },
+        { name: "Islamic Studies", total: 70 },
+        { name: "Reading Skills", total: 15 },
+        { name: "Nazra Quran", total: 15 }
+    ];
+
+    // Global variable to hold student data
+    let students = [];
+
+    // Fallback static data (used if sheet fails to load)
+    const fallbackStudents = [
+        { roll: "01", name: "Ali Raza", father: "Ahmed Raza", class: "8th", marks: [85,78,92,88,65,14,13], remarks: "Excellent performance!" },
+        { roll: "02", name: "Sara Khan", father: "Kamran Khan", class: "8th", marks: [78,82,79,85,60,12,12], remarks: "Good, keep it up." },
+        { roll: "03", name: "Usman Ali", father: "Rashid Ali", class: "8th", marks: [45,38,52,48,35,8,9], remarks: "Needs improvement." }
+    ];
+
+    // ========== HELPER FUNCTIONS ==========
+    function getPassMark(total) {
+        return Math.ceil((schoolConfig.passPercentage / 100) * total);
+    }
+
+    function getGrade(percentage) {
+        if (percentage >= 90) return { grade: "A+", class: "grade-A" };
+        if (percentage >= 80) return { grade: "A", class: "grade-A" };
+        if (percentage >= 70) return { grade: "B+", class: "grade-B" };
+        if (percentage >= 60) return { grade: "B", class: "grade-B" };
+        if (percentage >= 50) return { grade: "C", class: "grade-C" };
+        if (percentage >= 40) return { grade: "D", class: "grade-D" };
+        return { grade: "F", class: "grade-F" };
+    }
+
+    function ordinal(n) {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    // Compute position among students of the same class
+    function computePosition(student, classStudents) {
+        const totals = classStudents.map(s => ({
+            roll: s.roll,
+            total: s.marks.reduce((a, b) => a + b, 0)
+        }));
+        totals.sort((a, b) => b.total - a.total);
+        const pos = totals.findIndex(s => s.roll === student.roll) + 1;
+        return pos;
+    }
+
+    // ========== DISPLAY RESULT CARD ==========
+    function showResultCard(student) {
+        const cardWrapper = document.getElementById("cardWrapper");
+        cardWrapper.style.display = "block";
+
+        // School info
+        document.getElementById("cardSchoolName").textContent = schoolConfig.schoolName;
+        document.getElementById("cardExamBadge").textContent = schoolConfig.examType;
+        document.getElementById("cardStudentName").textContent = student.name;
+        document.getElementById("cardFatherName").textContent = student.father || "—";
+        document.getElementById("cardRoll").textContent = student.roll;
+        document.getElementById("cardClass").textContent = student.class;
+        document.getElementById("cardSession").textContent = schoolConfig.session;
+        document.getElementById("cardExam").textContent = schoolConfig.examType;
+        const formattedDate = schoolConfig.examDate ? new Date(schoolConfig.examDate).toLocaleDateString("en-PK", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+        document.getElementById("cardDate").textContent = formattedDate;
+        document.getElementById("cardRemarks").textContent = student.remarks || "Keep up the good work!";
+
+        // Marks table & totals
+        const tbody = document.getElementById("cardMarksBody");
+        tbody.innerHTML = "";
+        let grandTotal = 0, grandObtained = 0;
+        let failedSubjects = [];
+
+        SUBJECTS.forEach((subj, i) => {
+            const total = subj.total;
+            const obtained = student.marks[i] || 0;
+            grandTotal += total;
+            grandObtained += obtained;
+            const passMark = getPassMark(total);
+            const percentage = (obtained / total) * 100;
+            const { grade, class: gradeClass } = getGrade(percentage);
+            const passed = obtained >= passMark;
+            if (!passed) failedSubjects.push(subj.name);
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td class="sno">${i+1}</td>
+                <td>${subj.name}</td>
+                <td>${total}</td>
+                <td><b>${obtained}</b></td>
+                <td>${passMark} <span style="font-size:.65rem;color:#999">(${schoolConfig.passPercentage}%)</span></td>
+                <td><span class="grade-badge ${gradeClass}">${grade}</span></td>
+                <td>${passed ? '<span class="status-pass">✅ Pass</span>' : '<span class="status-fail">❌ Fail</span>'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const overallPercentage = (grandObtained / grandTotal) * 100;
+        const { grade: overallGrade } = getGrade(overallPercentage);
+
+        document.getElementById("cTotal").textContent = grandTotal;
+        document.getElementById("cObtained").textContent = grandObtained;
+        document.getElementById("cPct").textContent = overallPercentage.toFixed(1) + "%";
+        document.getElementById("cGrade").textContent = overallGrade;
+
+        // Position
+        const sameClassStudents = students.filter(s => s.class === student.class);
+        const pos = computePosition(student, sameClassStudents);
+        document.getElementById("cPos").textContent = pos ? ordinal(pos) : "—";
+
+        // Banner
+        const banner = document.getElementById("cBanner");
+        if (failedSubjects.length > 0) {
+            banner.className = "result-banner banner-fail";
+            document.getElementById("cBannerIcon").textContent = "❌";
+            let failText = "Failed in: " + failedSubjects.join(", ");
+            document.getElementById("cBannerText").textContent = failText;
+            document.getElementById("cBannerSub").textContent = `Scored ${overallPercentage.toFixed(1)}% overall`;
+        } else {
+            banner.className = "result-banner banner-pass";
+            document.getElementById("cBannerIcon").textContent = "🎉";
+            document.getElementById("cBannerText").textContent = "PASS — Promoted to Next Class";
+            document.getElementById("cBannerSub").textContent = `Achieved ${overallPercentage.toFixed(1)}% — Grade ${overallGrade}`;
+        }
+
+        // Show action buttons
+        document.getElementById("cardActions").style.display = "flex";
+    }
+
+    // ========== LOOKUP ==========
+    function doLookup() {
+        const inputClass = document.getElementById("lkp_class").value.trim().toLowerCase();
+        const inputRoll = document.getElementById("lkp_roll").value.trim();
+        const msgDiv = document.getElementById("lookupMsg");
+
+        if (!inputRoll) {
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = "⚠️ Please enter a Roll Number.";
+            document.getElementById("cardWrapper").style.display = "none";
+            document.getElementById("cardActions").style.display = "none";
+            return;
+        }
+
+        if (students.length === 0) {
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = "⚠️ Data is still loading. Please wait a moment and try again.";
+            return;
+        }
+
+        const student = students.find(s => 
+            s.roll.toLowerCase() === inputRoll.toLowerCase() && 
+            s.class.toLowerCase() === inputClass
+        );
+
+        if (!student) {
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = `❌ No result found for Roll No. <b>${inputRoll}</b> in class <b>${inputClass}</b>. Please check your details.`;
+            document.getElementById("cardWrapper").style.display = "none";
+            document.getElementById("cardActions").style.display = "none";
+            return;
+        }
+
+        msgDiv.style.display = "none";
+        showResultCard(student);
+    }
+
+    function resetLookup() {
+        document.getElementById("cardWrapper").style.display = "none";
+        document.getElementById("cardActions").style.display = "none";
+        document.getElementById("lkp_roll").value = "";
+        document.getElementById("lookupMsg").style.display = "none";
+    }
+
+    // ========== FETCH FROM GOOGLE SHEETS API ==========
+    async function fetchGoogleSheet() {
+        const loadingDiv = document.getElementById("loadingMsg");
+        loadingDiv.style.display = "block";
+        try {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            const rows = data.values;
+            if (!rows || rows.length < 2) throw new Error("No data rows found");
+
+            const dataRows = rows.slice(1);
+            const parsed = [];
+            for (let row of dataRows) {
+                if (row.length < 4 + SUBJECTS.length) continue;
+                const roll = row[0]?.trim() || "";
+                const name = row[1]?.trim() || "";
+                const father = row[2]?.trim() || "";
+                const className = row[3]?.trim() || "";
+                const marks = [];
+                for (let i = 0; i < SUBJECTS.length; i++) {
+                    let val = parseFloat(row[4 + i]);
+                    if (isNaN(val)) val = 0;
+                    marks.push(val);
+                }
+                const remarks = row[4 + SUBJECTS.length]?.trim() || "";
+                if (roll && name) {
+                    parsed.push({ roll, name, father, class: className, marks, remarks });
+                }
+            }
+
+            if (parsed.length === 0) throw new Error("No valid student records");
+            students = parsed;
+            console.log(`Loaded ${students.length} students from Google Sheets API.`);
+            loadingDiv.style.display = "none";
+        } catch (error) {
+            console.error("Failed to load Google Sheet:", error);
+            loadingDiv.style.display = "none";
+            students = fallbackStudents;
+            document.getElementById("lookupMsg").style.display = "block";
+            document.getElementById("lookupMsg").innerHTML = `⚠️ Could not load data from Google Sheet. Using example data. Error: ${error.message}`;
+        }
+    }
+
+    // ========== EXPORT FUNCTIONS ==========
+    async function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const card = document.getElementById("resultCard");
+        const canvas = await html2canvas(card, { scale: 2, useCORS: true, backgroundColor: "#fffdf4" });
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        const w = pdf.internal.pageSize.getWidth();
+        const h = (canvas.height / canvas.width) * w;
+        pdf.addImage(imgData, "PNG", 0, 0, w, Math.min(h, 297));
+        const studentName = document.getElementById("cardStudentName").textContent || "result";
+        pdf.save(`result_${studentName.replace(/\s+/g, "_")}.pdf`);
+    }
+
+    async function exportImage() {
+        const card = document.getElementById("resultCard");
+        const canvas = await html2canvas(card, { scale: 2, useCORS: true, backgroundColor: "#fffdf4" });
+        const a = document.createElement("a");
+        const studentName = document.getElementById("cardStudentName").textContent || "result";
+        a.download = `result_${studentName.replace(/\s+/g, "_")}.png`;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+    }
+
+    // ========== INIT ==========
+    document.getElementById("lkp_class").value = "8th";
+    fetchGoogleSheet();
+</script>
+</body>
+</html>

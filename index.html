@@ -3,100 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Result Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Student Result Portal — National Educators</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- Dark Mode Toggle -->
-<button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode" id="themeBtn">🌙</button>
+<!-- Animated background canvas -->
+<canvas id="bgCanvas"></canvas>
 
-<div class="lookup-card">
-    <div class="lookup-header">
-        <h2>📋 Student Result Portal</h2>
-        <p>Enter your class and roll number to view your result</p>
+<!-- Floating orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="Toggle theme">
+    <span class="theme-icon">🌙</span>
+</button>
+
+<!-- ===== HERO SECTION ===== -->
+<header class="hero">
+    <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Academic Year 2024–2025
     </div>
-    <div class="lookup-form">
-        <div class="lf-field">
-            <label>Class</label>
-            <select id="lkp_class">
-                <option value="">— Select Class —</option>
-            </select>
+    <div class="hero-logo-wrap">
+        <div class="hero-logo-ring">
+            <img src="logo.png" alt="School Logo" class="hero-logo-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%231a3a6e%22/%3E%3Ctext x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22%23c9a227%22%3EN%3C/text%3E%3C/svg%3E';">
         </div>
-        <div class="lf-field">
-            <label>Roll Number</label>
-            <input id="lkp_roll" placeholder="e.g. 05" onkeydown="if(event.key==='Enter')doLookup()" autocomplete="off">
+    </div>
+    <h1 class="hero-title">
+        <span class="title-line">The National Educators</span>
+        <span class="title-line accent">School System</span>
+        <span class="title-sub">335 W/B · Result Portal</span>
+    </h1>
+    <p class="hero-desc">Access your official academic result card instantly. Enter your details below to view your performance report.</p>
+    <div class="hero-divider">
+        <span></span><span class="divider-diamond">◆</span><span></span>
+    </div>
+</header>
+
+<!-- ===== LOOKUP SECTION ===== -->
+<main class="main-content">
+
+    <section class="lookup-section">
+        <div class="glass-card lookup-card">
+            <div class="card-glow"></div>
+            <div class="card-inner">
+                <h2 class="card-title">
+                    <span class="title-icon">🔍</span>
+                    Find Your Result
+                </h2>
+                <p class="card-subtitle">Select your class and enter your roll number</p>
+
+                <div class="field-row">
+                    <div class="field-group">
+                        <label class="field-label">
+                            <span class="label-icon">📚</span> Class
+                        </label>
+                        <div class="select-wrap">
+                            <select id="lkp_class" class="fancy-input">
+                                <option value="">— Select Class —</option>
+                            </select>
+                            <span class="select-arrow">▾</span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">
+                            <span class="label-icon">🎫</span> Roll Number
+                        </label>
+                        <input id="lkp_roll" class="fancy-input" placeholder="e.g. 05"
+                               onkeydown="if(event.key==='Enter')doLookup()" autocomplete="off">
+                    </div>
+
+                    <button class="search-btn" onclick="doLookup()">
+                        <span class="btn-text">Search Result</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+
+                <!-- History -->
+                <div id="historySection" class="history-section" style="display:none">
+                    <div class="history-label">Recent Searches</div>
+                    <div id="historyList" class="history-list"></div>
+                </div>
+
+                <div id="loadingMsg" class="status-msg loading-msg" style="display:none">
+                    <span class="pulse-dot"></span> Loading data from server…
+                </div>
+                <div id="lookupMsg" class="status-msg error-msg" style="display:none"></div>
+            </div>
         </div>
-        <button class="search-btn" onclick="doLookup()">🔍 Search</button>
-    </div>
+    </section>
 
-    <!-- Search History -->
-    <div id="historySection" class="history-section" style="display:none">
-        <div class="history-label">🕐 Recent Searches</div>
-        <div id="historyList" class="history-list"></div>
-    </div>
+    <!-- ===== LEADERBOARD ===== -->
+    <section id="leaderboardSection" style="display:none">
+        <div class="glass-card leaderboard-card">
+            <div class="card-glow gold-glow"></div>
+            <div class="card-inner">
+                <div class="lb-top-row">
+                    <h2 class="card-title">
+                        <span class="title-icon">🏆</span>
+                        Class Leaderboard
+                    </h2>
+                    <div class="select-wrap mini">
+                        <select id="lbClassFilter" onchange="renderLeaderboard()" class="fancy-input mini">
+                            <option value="">All Classes</option>
+                        </select>
+                        <span class="select-arrow">▾</span>
+                    </div>
+                </div>
+                <div id="lbBody" class="lb-body"></div>
+            </div>
+        </div>
+    </section>
 
-    <div id="loadingMsg" class="loading">🔄 Loading data from Google Sheet...</div>
-    <div id="lookupMsg" class="not-found"></div>
-</div>
+</main>
 
-<!-- Leaderboard -->
-<div class="leaderboard-card" id="leaderboardCard" style="display:none">
-    <div class="lb-header">
-        <span>🏆 Class Leaderboard — Top Students</span>
-        <select id="lbClassFilter" onchange="renderLeaderboard()">
-            <option value="">All Classes</option>
-        </select>
-    </div>
-    <div id="lbBody" class="lb-body"></div>
-</div>
-
-<!-- Animated Result Reveal Overlay -->
+<!-- ===== REVEAL OVERLAY ===== -->
 <div class="reveal-overlay" id="revealOverlay">
-    <div class="reveal-content">
-        <div class="reveal-spinner"></div>
-        <div class="reveal-text" id="revealText">Fetching your result...</div>
+    <div class="reveal-inner">
+        <div class="reveal-rings">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+            <div class="reveal-emblem">📋</div>
+        </div>
+        <div class="reveal-text" id="revealText">Searching your result…</div>
+        <div class="reveal-bar"><div class="reveal-progress" id="revealProgress"></div></div>
     </div>
 </div>
 
-<div class="card-wrapper" id="cardWrapper">
+<!-- ===== RESULT CARD ===== -->
+<section class="result-section" id="resultSection" style="display:none">
     <div class="result-card" id="resultCard">
-        <div class="watermark">RESULT</div>
-        <div class="stripe"></div>
-        <div class="card-header">
-            <div class="school-logo">
-                <img src="logo.png" alt="School Logo" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23c9a227%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2265%22%20font-size%3D%2250%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EN%3C%2Ftext%3E%3C%2Fsvg%3E';">
+
+        <!-- Decorative corner elements -->
+        <div class="corner corner-tl">◈</div>
+        <div class="corner corner-tr">◈</div>
+        <div class="corner corner-bl">◈</div>
+        <div class="corner corner-br">◈</div>
+
+        <div class="rc-watermark">RESULT</div>
+
+        <!-- Header -->
+        <div class="rc-header">
+            <div class="rc-stripe-top"></div>
+            <div class="rc-header-inner">
+                <div class="rc-logo-wrap">
+                    <img src="logo.png" alt="Logo" class="rc-logo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%231a3a6e%22/%3E%3Ctext x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22%23c9a227%22%3EN%3C/text%3E%3C/svg%3E';">
+                </div>
+                <div class="rc-school-info">
+                    <div class="rc-school-name" id="cardSchoolName">The National Educators School System 335 W/B</div>
+                    <div class="rc-school-tagline">Academic Result Card · Official Document</div>
+                </div>
+                <div class="rc-exam-badge" id="cardExamBadge">Annual Exam</div>
             </div>
-            <div class="school-info">
-                <div class="school-name" id="cardSchoolName">The National Educators School System 335 W/B</div>
-                <div class="school-sub">Academic Result Card</div>
+        </div>
+
+        <!-- Student Info Band -->
+        <div class="rc-info-band">
+            <div class="rc-info-item">
+                <span class="rc-lbl">Student Name</span>
+                <span class="rc-val" id="cardStudentName">—</span>
             </div>
-            <div class="report-badge" id="cardExamBadge">Annual Exam</div>
+            <div class="rc-info-sep">|</div>
+            <div class="rc-info-item">
+                <span class="rc-lbl">Father's Name</span>
+                <span class="rc-val" id="cardFatherName">—</span>
+            </div>
+            <div class="rc-info-sep">|</div>
+            <div class="rc-info-item">
+                <span class="rc-lbl">Roll No.</span>
+                <span class="rc-val mono" id="cardRoll">—</span>
+            </div>
         </div>
-        <div class="info-band">
-            <div class="field"><span class="lbl">Student:</span><span class="val" id="cardStudentName">—</span></div>
-            <div class="field"><span class="lbl">Father:</span><span class="val" id="cardFatherName">—</span></div>
-            <div class="field"><span class="lbl">Roll No:</span><span class="val" id="cardRoll">—</span></div>
+
+        <!-- Meta Row -->
+        <div class="rc-meta-row">
+            <div class="rc-meta-cell">
+                <div class="rc-meta-lbl">Class</div>
+                <div class="rc-meta-val" id="cardClass">—</div>
+            </div>
+            <div class="rc-meta-cell">
+                <div class="rc-meta-lbl">Session</div>
+                <div class="rc-meta-val" id="cardSession">—</div>
+            </div>
+            <div class="rc-meta-cell">
+                <div class="rc-meta-lbl">Exam Type</div>
+                <div class="rc-meta-val" id="cardExam">—</div>
+            </div>
+            <div class="rc-meta-cell">
+                <div class="rc-meta-lbl">Date</div>
+                <div class="rc-meta-val" id="cardDate">—</div>
+            </div>
         </div>
-        <div class="meta-row">
-            <div class="meta-cell"><span class="lbl2">Class</span><span class="val2" id="cardClass">—</span></div>
-            <div class="meta-cell"><span class="lbl2">Session</span><span class="val2" id="cardSession">—</span></div>
-            <div class="meta-cell"><span class="lbl2">Exam</span><span class="val2" id="cardExam">—</span></div>
-            <div class="meta-cell"><span class="lbl2">Date</span><span class="val2" id="cardDate">—</span></div>
-        </div>
-        <div class="table-section">
-            <div class="section-title">Subject-wise Marks</div>
+
+        <!-- Marks Table -->
+        <div class="rc-table-section">
+            <div class="rc-section-head">
+                <div class="section-rule"></div>
+                <span>Subject-wise Performance</span>
+                <div class="section-rule"></div>
+            </div>
             <table class="marks-table">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th style="text-align:left">Subject</th>
+                        <th class="left">Subject</th>
                         <th>Total</th>
                         <th>Obtained</th>
-                        <th>Pass (40%)</th>
+                        <th>Pass Mark</th>
                         <th>Grade</th>
                         <th>Status</th>
                     </tr>
@@ -104,44 +225,86 @@
                 <tbody id="cardMarksBody"></tbody>
             </table>
         </div>
-        <div class="totals-strip">
-            <div class="tot-item"><div class="t-lbl">Total Marks</div><div class="t-val" id="cTotal">—</div></div>
-            <div class="tot-item"><div class="t-lbl">Obtained</div><div class="t-val gold" id="cObtained">—</div></div>
-            <div class="tot-item"><div class="t-lbl">Percentage</div><div class="t-val gold" id="cPct">—</div></div>
-            <div class="tot-item"><div class="t-lbl">Grade</div><div class="t-val gold" id="cGrade">—</div></div>
-            <div class="tot-item"><div class="t-lbl">Position</div><div class="t-val gold" id="cPos">—</div></div>
+
+        <!-- Totals Strip -->
+        <div class="rc-totals">
+            <div class="tot-cell">
+                <div class="tot-lbl">Total Marks</div>
+                <div class="tot-val" id="cTotal">—</div>
+            </div>
+            <div class="tot-cell highlight">
+                <div class="tot-lbl">Obtained</div>
+                <div class="tot-val gold" id="cObtained">—</div>
+            </div>
+            <div class="tot-cell highlight">
+                <div class="tot-lbl">Percentage</div>
+                <div class="tot-val gold" id="cPct">—</div>
+            </div>
+            <div class="tot-cell highlight">
+                <div class="tot-lbl">Grade</div>
+                <div class="tot-val gold" id="cGrade">—</div>
+            </div>
+            <div class="tot-cell">
+                <div class="tot-lbl">Class Position</div>
+                <div class="tot-val" id="cPos">—</div>
+            </div>
         </div>
-        <div class="result-banner banner-pass" id="cBanner">
-            <span id="cBannerIcon">🎓</span>
-            <span id="cBannerText">Result</span>
-            <span id="cBannerSub" style="font-size:.78rem;font-weight:600;opacity:.7"></span>
+
+        <!-- Result Banner -->
+        <div class="rc-banner" id="cBanner">
+            <span class="banner-icon" id="cBannerIcon">🎓</span>
+            <div class="banner-body">
+                <div class="banner-main" id="cBannerText">Result</div>
+                <div class="banner-sub" id="cBannerSub"></div>
+            </div>
         </div>
-        <div class="bottom-section">
-            <div class="remarks-box">
-                <div class="box-title">📝 Teacher's Remarks</div>
-                <div class="rem-text" id="cardRemarks">—</div>
+
+        <!-- Bottom Section -->
+        <div class="rc-bottom">
+            <div class="rc-remarks">
+                <div class="rc-box-lbl">📝 Teacher's Remarks</div>
+                <div class="rc-remarks-text" id="cardRemarks">—</div>
             </div>
-            <div class="sig-box">
-                <div class="box-title">✍️ Class Teacher</div>
-                <span class="sig-line"></span>
-                <div class="sig-label">Signature & Stamp</div>
+            <div class="rc-sig">
+                <div class="rc-box-lbl">✍️ Class Teacher</div>
+                <div class="sig-area"></div>
+                <div class="sig-caption">Signature & Stamp</div>
             </div>
-            <div class="sig-box">
-                <div class="box-title">🏫 Principal</div>
-                <span class="sig-line"></span>
-                <div class="sig-label">Signature & Stamp</div>
+            <div class="rc-sig">
+                <div class="rc-box-lbl">🏫 Principal</div>
+                <div class="sig-area"></div>
+                <div class="sig-caption">Signature & Stamp</div>
             </div>
+        </div>
+
+        <div class="rc-footer-strip">
+            <span>The National Educators School System 335 W/B</span>
+            <span class="dot-sep">◆</span>
+            <span id="footerDate"></span>
+            <span class="dot-sep">◆</span>
+            <span>Official Result Document</span>
         </div>
     </div>
-</div>
 
-<div class="actions" id="cardActions" style="display:none">
-    <button class="btn btn-primary" onclick="window.print()">🖨️ Print (A4)</button>
-    <button class="btn btn-gold" onclick="exportPDF()">📄 Export PDF</button>
-    <button class="btn btn-green" onclick="exportImage()">🖼️ Save Image</button>
-    <button class="btn btn-whatsapp" onclick="shareWhatsApp()">💬 WhatsApp</button>
-    <button class="btn btn-outline" onclick="resetLookup()">🔍 Search Again</button>
-</div>
+    <!-- Action Buttons -->
+    <div class="action-bar" id="cardActions">
+        <button class="act-btn primary" onclick="window.print()">
+            <span>🖨️</span> Print
+        </button>
+        <button class="act-btn gold" onclick="exportPDF()">
+            <span>📄</span> Export PDF
+        </button>
+        <button class="act-btn green" onclick="exportImage()">
+            <span>🖼️</span> Save Image
+        </button>
+        <button class="act-btn whatsapp" onclick="shareWhatsApp()">
+            <span>💬</span> WhatsApp
+        </button>
+        <button class="act-btn outline" onclick="resetLookup()">
+            <span>←</span> Search Again
+        </button>
+    </div>
+</section>
 
 <script src="script.js"></script>
 </body>

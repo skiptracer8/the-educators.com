@@ -1,10 +1,6 @@
 // ========== CONFIGURATION ==========
-// SECURITY NOTE: These credentials are visible in the browser because the frontend
-// must send them to Google Sheets. To protect them, move this logic to a backend proxy.
-// For development, restrict your API key to your website's domain in Google Cloud Console.
-const SHEET_ID = "16-I-m6-nSqqEwwuX3onCL_ExlWtirE6Tgoh0f35ZgvM";
-const API_KEY = "AIzaSyCKbJZPomNDZ1N1HhLJ2MpSAHqd_Z58PnI";
-const RANGE = "Sheet1!A1:Z";
+// (No credentials here – they are stored as environment variables on Vercel)
+// The frontend will fetch data from our own API endpoint.
 
 // School info (fixed)
 const schoolConfig = {
@@ -28,7 +24,7 @@ const SUBJECTS = [
 
 let students = [];
 
-// Fallback static data (used if sheet fails to load)
+// Fallback static data (used if the API fails)
 const fallbackStudents = [
     { roll: "01", name: "Ali Raza", father: "Ahmed Raza", class: "8th", marks: [85,78,92,88,65,14,13], remarks: "Excellent performance!" },
     { roll: "02", name: "Sara Khan", father: "Kamran Khan", class: "8th", marks: [78,82,79,85,60,12,12], remarks: "Good, keep it up." },
@@ -185,16 +181,15 @@ function resetLookup() {
     document.getElementById("lookupMsg").style.display = "none";
 }
 
-// ========== FETCH FROM GOOGLE SHEETS API ==========
+// ========== FETCH DATA FROM OUR BACKEND PROXY ==========
 async function fetchGoogleSheet() {
     const loadingDiv = document.getElementById("loadingMsg");
     loadingDiv.style.display = "block";
     try {
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
-        const response = await fetch(url);
+        // Call our Vercel serverless function (same domain)
+        const response = await fetch('/api/results');
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+            throw new Error(`HTTP ${response.status}`);
         }
         const data = await response.json();
         const rows = data.values;
@@ -222,14 +217,14 @@ async function fetchGoogleSheet() {
 
         if (parsed.length === 0) throw new Error("No valid student records");
         students = parsed;
-        console.log(`Loaded ${students.length} students from Google Sheets API.`);
+        console.log(`Loaded ${students.length} students from the backend.`);
         loadingDiv.style.display = "none";
     } catch (error) {
-        console.error("Failed to load Google Sheet:", error);
+        console.error("Failed to load data from backend:", error);
         loadingDiv.style.display = "none";
         students = fallbackStudents;
         document.getElementById("lookupMsg").style.display = "block";
-        document.getElementById("lookupMsg").innerHTML = `⚠️ Could not load data from Google Sheet. Using example data. Error: ${error.message}`;
+        document.getElementById("lookupMsg").innerHTML = `⚠️ Could not load data from server. Using example data. Error: ${error.message}`;
     }
 }
 

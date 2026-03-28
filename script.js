@@ -1,4 +1,4 @@
-// ========== CONFIGURATION ==========
+// ========== SCHOOL CONFIG ==========
 const schoolConfig = {
     schoolName: "The National Educators School System 335 W/B",
     session: "2025-2026",
@@ -6,23 +6,124 @@ const schoolConfig = {
     passPercentage: 40
 };
 
-const SUBJECTS = [
-    { name: "English",         total: 100 },
-    { name: "Urdu",            total: 100 },
-    { name: "Math",            total: 100 },
-    { name: "Science",         total: 100 },
-    { name: "Islamic Studies", total: 70  },
-    { name: "Reading Skills",  total: 15  },
-    { name: "Nazra Quran",     total: 15  }
-];
+// ========== PER-CLASS SUBJECTS ==========
+// Each class has its own subject list with individual total marks.
+// The ORDER here must match the column order in your Google Sheet (columns E onward).
+// ✏️  To add a subject: add a new line { name: "Subject", total: XX }
+// ✏️  To change total marks: edit the total number
+// ✏️  To remove a subject: delete its line
+// ⚠️  After any change here, update your Google Sheet columns to match.
 
+const CLASS_SUBJECTS = {
+    "1st": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "Islamic Studies", total: 50  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "2nd": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "Islamic Studies", total: 50  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "3rd": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "General Science", total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "4th": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "General Science", total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "5th": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "General Science", total: 100 },
+        { name: "Social Studies",  total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "6th": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "Science",         total: 100 },
+        { name: "Social Studies",  total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Reading Skills",  total: 15  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "7th": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "Science",         total: 100 },
+        { name: "Social Studies",  total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Reading Skills",  total: 15  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "8th": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "Science",         total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Reading Skills",  total: 15  },
+        { name: "Nazra Quran",     total: 15  }
+    ],
+    "9th": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "Physics",         total: 100 },
+        { name: "Chemistry",       total: 100 },
+        { name: "Biology",         total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Computer",        total: 50  }
+    ],
+    "10th": [
+        { name: "English",         total: 100 },
+        { name: "Urdu",            total: 100 },
+        { name: "Math",            total: 100 },
+        { name: "Physics",         total: 100 },
+        { name: "Chemistry",       total: 100 },
+        { name: "Biology",         total: 100 },
+        { name: "Islamic Studies", total: 70  },
+        { name: "Computer",        total: 50  }
+    ]
+};
+
+// Helper: get subjects for a given class label (case-insensitive)
+function getSubjectsForClass(className) {
+    if (!className) return [];
+    const key = Object.keys(CLASS_SUBJECTS).find(
+        k => k.toLowerCase() === className.trim().toLowerCase()
+    );
+    return key ? CLASS_SUBJECTS[key] : [];
+}
+
+// ========== STUDENT DATA ==========
 let students = [];
 let currentStudent = null;
 
+// Fallback sample data shown when Google Sheet cannot be reached
 const fallbackStudents = [
-    { roll:"01", name:"Ali Raza",   father:"Ahmed Raza",  class:"8th", marks:[85,78,92,88,65,14,13], remarks:"Excellent performance!" },
-    { roll:"02", name:"Sara Khan",  father:"Kamran Khan", class:"8th", marks:[78,82,79,85,60,12,12], remarks:"Good, keep it up." },
-    { roll:"03", name:"Usman Ali",  father:"Rashid Ali",  class:"8th", marks:[45,38,52,48,35,8,9],   remarks:"Needs improvement." }
+    { roll:"01", name:"Ali Raza",    father:"Ahmed Raza",   class:"8th",  marks:[85,78,92,88,65,14,13],       remarks:"Excellent performance!", examDate:"" },
+    { roll:"02", name:"Sara Khan",   father:"Kamran Khan",  class:"8th",  marks:[78,82,79,85,60,12,12],       remarks:"Good, keep it up.",       examDate:"" },
+    { roll:"01", name:"Bilal Asif",  father:"Asif Mehmood", class:"9th",  marks:[70,65,80,75,68,72,60,45],   remarks:"Well done!",              examDate:"" },
+    { roll:"01", name:"Hina Naz",    father:"Naz Ahmed",    class:"5th",  marks:[90,85,95,88,80,65,14],       remarks:"Outstanding!",            examDate:"" }
 ];
 
 // ========== PARTICLE BACKGROUND ==========
@@ -66,7 +167,6 @@ function initCanvas() {
             if (p.y < 0) p.y = H;
             if (p.y > H) p.y = 0;
         });
-        // Draw connecting lines between close particles
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
                 const dx = particles[i].x - particles[j].x;
@@ -101,7 +201,13 @@ function getGrade(pct) {
     if (pct >= 40) return { grade:"D",  cls:"grade-D" };
     return { grade:"F", cls:"grade-F" };
 }
-function getClassList() { return [...new Set(students.map(s=>s.class))].sort(); }
+
+// Returns class list sorted in proper school order (1st … 10th)
+const CLASS_ORDER = ["1st","2nd","3rd","4th","5th","6th","7th","8th","9th","10th"];
+function getClassList() {
+    const found = [...new Set(students.map(s => s.class.trim()))];
+    return CLASS_ORDER.filter(c => found.some(f => f.toLowerCase() === c.toLowerCase()));
+}
 
 // ========== DARK MODE ==========
 function toggleTheme() {
@@ -156,16 +262,13 @@ function populateClassDropdown() {
     sel.innerHTML = '<option value="">— Select Class —</option>' +
         classes.map(c=>`<option value="${c}">${c}</option>`).join('');
     const last = localStorage.getItem('lastClass');
-    if (last && classes.includes(last)) sel.value = last;
+    if (last && classes.some(c => c.toLowerCase() === last.toLowerCase())) sel.value = last;
 }
-
-
 
 // ========== REVEAL ANIMATION ==========
 function showReveal(msg) {
     const ov = document.getElementById('revealOverlay');
     document.getElementById('revealText').textContent = msg;
-    // reset progress bar
     const bar = document.getElementById('revealProgress');
     bar.style.animation = 'none';
     void bar.offsetWidth;
@@ -193,6 +296,9 @@ function showResultCard(student) {
 }
 
 function _renderCard(student) {
+    // Load subjects specific to this student's class
+    const subjects = getSubjectsForClass(student.class);
+
     document.getElementById('cardSchoolName').textContent  = schoolConfig.schoolName;
     document.getElementById('cardExamBadge').textContent   = schoolConfig.examType;
     document.getElementById('cardStudentName').textContent = student.name;
@@ -201,23 +307,21 @@ function _renderCard(student) {
     document.getElementById('cardClass').textContent       = student.class;
     document.getElementById('cardSession').textContent     = schoolConfig.session;
     document.getElementById('cardExam').textContent        = schoolConfig.examType;
-
-    // Auto date: from sheet if present, else today
-    document.getElementById('cardDate').textContent    = student.examDate || getTodayFormatted();
-    document.getElementById('footerDate').textContent  = getTodayFormatted();
-    document.getElementById('cardRemarks').textContent = student.remarks || 'Keep up the good work!';
+    document.getElementById('cardDate').textContent        = student.examDate || getTodayFormatted();
+    document.getElementById('footerDate').textContent      = getTodayFormatted();
+    document.getElementById('cardRemarks').textContent     = student.remarks || 'Keep up the good work!';
 
     const tbody = document.getElementById('cardMarksBody');
     tbody.innerHTML = '';
     let grandTotal=0, grandObtained=0, failedSubjects=[];
 
-    SUBJECTS.forEach((subj,i) => {
+    subjects.forEach((subj, i) => {
         const total    = subj.total;
-        const obtained = student.marks[i] || 0;
+        const obtained = student.marks[i] !== undefined ? student.marks[i] : 0;
         grandTotal    += total;
         grandObtained += obtained;
         const passMark = getPassMark(total);
-        const pct      = (obtained/total)*100;
+        const pct      = (obtained / total) * 100;
         const {grade, cls} = getGrade(pct);
         const passed   = obtained >= passMark;
         if (!passed) failedSubjects.push(subj.name);
@@ -234,7 +338,7 @@ function _renderCard(student) {
         tbody.appendChild(tr);
     });
 
-    const overallPct = (grandObtained/grandTotal)*100;
+    const overallPct = grandTotal > 0 ? (grandObtained / grandTotal) * 100 : 0;
     const {grade: overallGrade} = getGrade(overallPct);
 
     document.getElementById('cTotal').textContent    = grandTotal;
@@ -275,7 +379,7 @@ function shareWhatsApp() {
 
 // ========== LOOKUP ==========
 function doLookup() {
-    const cls    = document.getElementById('lkp_class').value.trim().toLowerCase();
+    const cls    = document.getElementById('lkp_class').value.trim();
     const roll   = document.getElementById('lkp_roll').value.trim();
     const msgDiv = document.getElementById('lookupMsg');
 
@@ -286,8 +390,8 @@ function doLookup() {
     if (!students.length) { msgDiv.style.display='block'; msgDiv.innerHTML='⚠️ Data is still loading. Please try again.'; return; }
 
     const student = students.find(s =>
-        s.roll.toLowerCase() === roll.toLowerCase() &&
-        s.class.toLowerCase() === cls
+        s.roll.trim().toLowerCase() === roll.toLowerCase() &&
+        s.class.trim().toLowerCase() === cls.toLowerCase()
     );
 
     if (!student) {
@@ -311,7 +415,23 @@ function resetLookup() {
     window.scrollTo({ top:0, behavior:'smooth' });
 }
 
-// ========== FETCH DATA ==========
+// ========== FETCH DATA FROM GOOGLE SHEET ==========
+//
+// Google Sheet column layout (all classes in ONE sheet):
+// ┌──────┬──────┬────────┬───────┬─────────────────────────────────────────┬─────────┬──────────┐
+// │  A   │  B   │   C    │   D   │           E → E+n  (marks)              │ Remarks │ ExamDate │
+// │ Roll │ Name │ Father │ Class │  Subject 1 … Subject N (for that class) │         │(optional)│
+// └──────┴──────┴────────┴───────┴─────────────────────────────────────────┴─────────┴──────────┘
+//
+// Each class has a DIFFERENT number of mark columns (defined in CLASS_SUBJECTS above).
+// Remarks always comes right after the last mark column for that class.
+// ExamDate is the column after Remarks (optional — leave blank to show today's date).
+//
+// Example — 8th class has 7 subjects → marks in E,F,G,H,I,J,K → Remarks in L → ExamDate in M
+// Example — 9th class has 8 subjects → marks in E,F,G,H,I,J,K,L → Remarks in M → ExamDate in N
+//
+// All classes can share the same sheet as long as each row's Class column (D) is set correctly.
+
 async function fetchGoogleSheet() {
     const loading = document.getElementById('loadingMsg');
     loading.style.display = 'flex';
@@ -324,17 +444,35 @@ async function fetchGoogleSheet() {
 
         const parsed = [];
         for (const row of rows.slice(1)) {
-            if (row.length < 4 + SUBJECTS.length) continue;
+            if (row.length < 4) continue;
+
             const roll      = row[0]?.trim() || '';
             const name      = row[1]?.trim() || '';
             const father    = row[2]?.trim() || '';
             const className = row[3]?.trim() || '';
-            const marks     = SUBJECTS.map((_,i) => { const v=parseFloat(row[4+i]); return isNaN(v)?0:v; });
-            const remarks   = row[4+SUBJECTS.length]?.trim() || '';
-            const examDate  = row[4+SUBJECTS.length+1]?.trim() || '';
-            if (roll && name) parsed.push({roll, name, father, class:className, marks, remarks, examDate});
+
+            if (!roll || !name || !className) continue;
+
+            // Get this class's subject list to know how many mark columns to read
+            const subjects = getSubjectsForClass(className);
+            if (!subjects.length) continue; // skip unrecognised class names
+
+            // Read exactly subjects.length mark columns starting at column index 4 (E)
+            const marks = subjects.map((_, i) => {
+                const v = parseFloat(row[4 + i]);
+                return isNaN(v) ? 0 : v;
+            });
+
+            // Remarks and ExamDate sit AFTER the mark columns — index shifts per class
+            const remarksIdx  = 4 + subjects.length;
+            const examDateIdx = 4 + subjects.length + 1;
+            const remarks     = row[remarksIdx]?.trim()  || '';
+            const examDate    = row[examDateIdx]?.trim() || '';
+
+            parsed.push({ roll, name, father, class: className, marks, remarks, examDate });
         }
-        if (!parsed.length) throw new Error('No valid student records');
+
+        if (!parsed.length) throw new Error('No valid student records found');
         students = parsed;
         loading.style.display = 'none';
 

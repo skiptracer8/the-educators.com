@@ -101,15 +101,6 @@ function getGrade(pct) {
     if (pct >= 40) return { grade:"D",  cls:"grade-D" };
     return { grade:"F", cls:"grade-F" };
 }
-function ordinal(n) {
-    const s=["th","st","nd","rd"], v=n%100;
-    return n+(s[(v-20)%10]||s[v]||s[0]);
-}
-function computePosition(student, classStudents) {
-    const sorted = [...classStudents]
-        .sort((a,b) => b.marks.reduce((x,y)=>x+y,0) - a.marks.reduce((x,y)=>x+y,0));
-    return sorted.findIndex(s => s.roll===student.roll) + 1;
-}
 function getClassList() { return [...new Set(students.map(s=>s.class))].sort(); }
 
 // ========== DARK MODE ==========
@@ -168,38 +159,7 @@ function populateClassDropdown() {
     if (last && classes.includes(last)) sel.value = last;
 }
 
-// ========== LEADERBOARD ==========
-function populateLeaderboardFilter() {
-    const sel = document.getElementById('lbClassFilter');
-    sel.innerHTML = '<option value="">All Classes</option>' +
-        getClassList().map(c=>`<option value="${c}">${c}</option>`).join('');
-}
-function renderLeaderboard() {
-    const filter  = document.getElementById('lbClassFilter').value;
-    const grandTotalMarks = SUBJECTS.reduce((a,s)=>a+s.total,0);
-    const filtered = (filter ? students.filter(s=>s.class===filter) : students)
-        .map(s => ({ ...s, total: s.marks.reduce((a,b)=>a+b,0) }))
-        .sort((a,b) => b.total-a.total)
-        .slice(0,10);
 
-    const body = document.getElementById('lbBody');
-    const medals = ['🥇','🥈','🥉'];
-    body.innerHTML = filtered.map((s,i)=>{
-        const pct = ((s.total/grandTotalMarks)*100).toFixed(1);
-        const rankClass = i<3 ? `rank-${i+1}` : 'rank-other';
-        const badge = i<3 ? medals[i] : i+1;
-        return `<div class="lb-row" style="animation-delay:${i*0.045}s">
-            <div class="lb-rank ${rankClass}">${badge}</div>
-            <div class="lb-info">
-                <div class="lb-name">${s.name}</div>
-                <div class="lb-meta">Class ${s.class} · Roll ${s.roll}</div>
-            </div>
-            <div class="lb-score">${s.total}<span class="lb-score-sub">${pct}%</span></div>
-        </div>`;
-    }).join('');
-
-    document.getElementById('leaderboardSection').style.display = 'block';
-}
 
 // ========== REVEAL ANIMATION ==========
 function showReveal(msg) {
@@ -282,9 +242,6 @@ function _renderCard(student) {
     document.getElementById('cPct').textContent      = overallPct.toFixed(1) + '%';
     document.getElementById('cGrade').textContent    = overallGrade;
 
-    const pos = computePosition(student, students.filter(s=>s.class===student.class));
-    document.getElementById('cPos').textContent = pos ? ordinal(pos) : '—';
-
     const banner = document.getElementById('cBanner');
     if (failedSubjects.length > 0) {
         banner.className = 'rc-banner banner-fail';
@@ -310,7 +267,7 @@ function shareWhatsApp() {
         `👤 *${document.getElementById('cardStudentName').textContent}*\n` +
         `📚 Class: ${document.getElementById('cardClass').textContent} · Roll: ${document.getElementById('cardRoll').textContent}\n` +
         `📊 Percentage: *${document.getElementById('cPct').textContent}*\n` +
-        `🏅 Grade: *${document.getElementById('cGrade').textContent}* · Position: *${document.getElementById('cPos').textContent}*\n\n` +
+        `🏅 Grade: *${document.getElementById('cGrade').textContent}*\n\n` +
         `✅ *${document.getElementById('cBannerText').textContent}*\n\n` +
         `_Official Result · ${getTodayFormatted()}_`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -391,8 +348,6 @@ async function fetchGoogleSheet() {
     }
 
     populateClassDropdown();
-    populateLeaderboardFilter();
-    renderLeaderboard();
     renderHistory();
 }
 

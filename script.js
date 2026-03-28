@@ -182,11 +182,15 @@ async function fetchGoogleSheet() {
     const loadingDiv = document.getElementById("loadingMsg");
     loadingDiv.style.display = "block";
     try {
-        // Call our Vercel serverless function (same domain)
         const response = await fetch('/api/results');
+        console.log('Response status:', response.status);
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
+        const data = await response.json();
+        console.log('Data received:', data);
         const data = await response.json();
         const rows = data.values;
         if (!rows || rows.length < 2) throw new Error("No data rows found");

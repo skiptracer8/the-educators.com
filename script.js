@@ -1,7 +1,7 @@
 // ========== CONFIGURATION ==========
 const schoolConfig = {
     schoolName: "The National Educators School System 335 W/B",
-    session: "2024-2025",
+    session: "2025-2026",
     examType: "Annual Exam",
     passPercentage: 40
 };

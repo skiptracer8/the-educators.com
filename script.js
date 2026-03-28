@@ -344,13 +344,9 @@ function _renderCard(student) {
  * @returns {string} Formatted date (e.g., "04/15/2026")
  */
 function getTodayFormatted() {
-    const today = new Date();
-    // Customize the format as needed
-    return today.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
+    const date = new Date().toLocaleDateString("en-PK", { day:"2-digit", month:"short", year:"numeric" });
+    console.log("getTodayFormatted returned:", date);
+    return date;
 }
 
 /**

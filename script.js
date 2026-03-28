@@ -119,9 +119,16 @@ function getSubjectsForClass(className) {
     const key = CLASS_ORDER.find(k => k.toLowerCase() === className.trim().toLowerCase());
     return key ? (CLASS_SUBJECTS[key] || []) : [];
 }
+
+// ✅ RELIABLE CURRENT DATE FORMATTER (always shows today's date)
 function getTodayFormatted() {
-    return new Date().toLocaleDateString("en-PK", { day:"2-digit", month:"short", year:"numeric" });
+    const d = new Date();
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = d.toLocaleString('default', { month: 'short' }); // e.g., "Mar"
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;   // Example: 28-Mar-2026
 }
+
 function getPassMark(total) { return Math.ceil((schoolConfig.passPercentage / 100) * total); }
 function getGrade(pct) {
     if (pct >= 90) return { grade:"A+", cls:"grade-A" };
@@ -336,79 +343,25 @@ function _renderCard(student) {
     document.getElementById('cardSession').textContent     = schoolConfig.session;
     document.getElementById('cardExam').textContent        = schoolConfig.examType;
 
-    // ✅ DATE FIX: examDate is stored explicitly on the student object.
-    //    It is read from the sheet column AFTER the marks columns (correct offset per class).
-    //    If blank/missing, fall back to today's date — never a marks value.
-    /**
- * Returns today's date in a readable format.
- * @returns {string} Formatted date (e.g., "04/15/2026")
- */
-function getTodayFormatted() {
-    const date = new Date().toLocaleDateString("en-PK", { day:"2-digit", month:"short", year:"numeric" });
-    console.log("getTodayFormatted returned:", date);
-    return date;
-}
+    // ✅ DATE FIX: Always use current date for both cardDate and footerDate
+    const currentDate = getTodayFormatted();
 
-/**
- * Updates the card and footer dates based on student data.
- * If student.examDate is a valid date string, it is used for the card;
- * otherwise, today's date is used. The footer always shows today's date.
- * @param {Object} student - Student object containing examDate property
- */
-function updateDates(student) {
-    let cardDate;
-
-    // 1. Validate student.examDate
-    if (student && student.examDate && typeof student.examDate === 'string') {
-        const trimmed = student.examDate.trim();
-        if (trimmed !== '') {
-            const parsed = new Date(trimmed);
-            // Check if the parsed date is valid
-            if (!isNaN(parsed.getTime())) {
-                // Format the valid exam date consistently
-                cardDate = parsed.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-            } else {
-                // Invalid date string -> fallback to today
-                cardDate = getTodayFormatted();
-            }
-        } else {
-            // Empty string -> fallback to today
-            cardDate = getTodayFormatted();
-        }
-    } else {
-        // No examDate or wrong type -> fallback to today
-        cardDate = getTodayFormatted();
-    }
-
-    // 2. Update DOM elements (safely check existence)
     const cardDateElem = document.getElementById('cardDate');
     const footerDateElem = document.getElementById('footerDate');
 
     if (cardDateElem) {
-        cardDateElem.textContent = cardDate;
+        cardDateElem.textContent = currentDate;
+        console.log('✅ cardDate set to:', currentDate);
     } else {
-        console.warn('Element with id "cardDate" not found.');
+        console.error('❌ Element #cardDate not found in DOM!');
     }
 
     if (footerDateElem) {
-        footerDateElem.textContent = getTodayFormatted();
+        footerDateElem.textContent = currentDate;
+        console.log('✅ footerDate set to:', currentDate);
     } else {
-        console.warn('Element with id "footerDate" not found.');
+        console.error('❌ Element #footerDate not found in DOM!');
     }
-}
-
-// Example usage (ensure DOM is ready before calling)
-document.addEventListener('DOMContentLoaded', () => {
-    // Replace with your actual student object
-    const student = {
-        examDate: "2026-03-28" // example
-    };
-    updateDates(student);
-});
 
     document.getElementById('cardRemarks').textContent = student.remarks || 'Keep up the good work!';
 
@@ -429,13 +382,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!passed) failedSubjects.push(subj.name);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${i+1}</td>
-            <td>${subj.name}</td>
-            <td>${total}</td>
-            <td><strong>${obtained}</strong></td>
-            <td>${passMark} <span style="font-size:.58rem;color:#bbb">(${schoolConfig.passPercentage}%)</span></td>
-            <td><span class="grade-badge ${cls}">${grade}</span></td>
-            <td>${passed?'<span class="status-pass">✅ Pass</span>':'<span class="status-fail">❌ Fail</span>'}</td>`;
+            <td>${i+1}<\/td>
+            <td>${subj.name}<\/td>
+            <td>${total}<\/td>
+            <td><strong>${obtained}</strong><\/td>
+            <td>${passMark} <span style="font-size:.58rem;color:#bbb">(${schoolConfig.passPercentage}%)</span><\/td>
+            <td><span class="grade-badge ${cls}">${grade}</span><\/td>
+            <td>${passed?'<span class="status-pass">✅ Pass</span>':'<span class="status-fail">❌ Fail</span>'}<\/td>`;
         tbody.appendChild(tr);
     });
 
@@ -485,9 +438,9 @@ function shareWhatsApp() {
 //
 //  Where n = number of subjects for that class (from CLASS_SUBJECTS above).
 //  Remarks and ExamDate positions shift depending on the class — the code
-//  calculates the correct index dynamically, fixing the date-showing-as-total bug.
+//  calculates the correct index dynamically.
 //
-//  ExamDate format: dd-Mon-yyyy (e.g. 15-Mar-2025) or leave blank for today's date.
+//  ExamDate is IGNORED for display — we always use current date.
 // ─────────────────────────────────────────────────────────────────────────────
 async function fetchGoogleSheet() {
     const loading = document.getElementById('loadingMsg');
@@ -523,14 +476,14 @@ async function fetchGoogleSheet() {
                 return Number.isFinite(v) ? v : 0;
             });
 
-            // ✅ Remarks and ExamDate are at FIXED offsets AFTER the marks:
-            //    remarksIdx  = 4 + n      (the column right after the last mark)
-            //    examDateIdx = 4 + n + 1  (one after remarks)
+            // Remarks and ExamDate are at FIXED offsets AFTER the marks:
+            // remarksIdx  = 4 + n
+            // examDateIdx = 4 + n + 1
             const remarksIdx  = 4 + n;
             const examDateIdx = 4 + n + 1;
 
             const remarks  = (row[remarksIdx]  ?? '').trim();
-            const examDate = (row[examDateIdx] ?? '').trim();
+            const examDate = (row[examDateIdx] ?? '').trim(); // stored but not used for display
 
             parsed.push({ roll, name, father, class: className, marks, remarks, examDate });
         }
@@ -569,7 +522,9 @@ async function exportImage() {
     a.href = canvas.toDataURL('image/png'); a.click();
 }
 
-// ===== INIT =====
-initTheme();
-initCanvas();
-fetchGoogleSheet();
+// ===== INITIALIZATION (ensures DOM is ready) =====
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    initCanvas();
+    fetchGoogleSheet();
+});

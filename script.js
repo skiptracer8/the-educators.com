@@ -1,8 +1,4 @@
-// ========== CONFIGURATION ==========
-// (No credentials here – they are stored as environment variables on Vercel)
-// The frontend will fetch data from our own API endpoint.
 
-// School info (fixed)
 const schoolConfig = {
     schoolName: "The National Educators school system 335 W/B",
     session: "2024-2025",
@@ -11,7 +7,7 @@ const schoolConfig = {
     passPercentage: 40
 };
 
-// Subject list (order must match columns in Google Sheet after "Remarks")
+
 const SUBJECTS = [
     { name: "English", total: 100 },
     { name: "Urdu", total: 100 },

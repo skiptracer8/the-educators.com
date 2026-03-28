@@ -339,9 +339,80 @@ function _renderCard(student) {
     // ✅ DATE FIX: examDate is stored explicitly on the student object.
     //    It is read from the sheet column AFTER the marks columns (correct offset per class).
     //    If blank/missing, fall back to today's date — never a marks value.
-    const dateValue = (student.examDate && student.examDate.trim()) ? student.examDate.trim() : getTodayFormatted();
-    document.getElementById('cardDate').textContent   = dateValue;
-    document.getElementById('footerDate').textContent = getTodayFormatted();
+    /**
+ * Returns today's date in a readable format.
+ * @returns {string} Formatted date (e.g., "04/15/2026")
+ */
+function getTodayFormatted() {
+    const today = new Date();
+    // Customize the format as needed
+    return today.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+}
+
+/**
+ * Updates the card and footer dates based on student data.
+ * If student.examDate is a valid date string, it is used for the card;
+ * otherwise, today's date is used. The footer always shows today's date.
+ * @param {Object} student - Student object containing examDate property
+ */
+function updateDates(student) {
+    let cardDate;
+
+    // 1. Validate student.examDate
+    if (student && student.examDate && typeof student.examDate === 'string') {
+        const trimmed = student.examDate.trim();
+        if (trimmed !== '') {
+            const parsed = new Date(trimmed);
+            // Check if the parsed date is valid
+            if (!isNaN(parsed.getTime())) {
+                // Format the valid exam date consistently
+                cardDate = parsed.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            } else {
+                // Invalid date string -> fallback to today
+                cardDate = getTodayFormatted();
+            }
+        } else {
+            // Empty string -> fallback to today
+            cardDate = getTodayFormatted();
+        }
+    } else {
+        // No examDate or wrong type -> fallback to today
+        cardDate = getTodayFormatted();
+    }
+
+    // 2. Update DOM elements (safely check existence)
+    const cardDateElem = document.getElementById('cardDate');
+    const footerDateElem = document.getElementById('footerDate');
+
+    if (cardDateElem) {
+        cardDateElem.textContent = cardDate;
+    } else {
+        console.warn('Element with id "cardDate" not found.');
+    }
+
+    if (footerDateElem) {
+        footerDateElem.textContent = getTodayFormatted();
+    } else {
+        console.warn('Element with id "footerDate" not found.');
+    }
+}
+
+// Example usage (ensure DOM is ready before calling)
+document.addEventListener('DOMContentLoaded', () => {
+    // Replace with your actual student object
+    const student = {
+        examDate: "2026-03-28" // example
+    };
+    updateDates(student);
+});
 
     document.getElementById('cardRemarks').textContent = student.remarks || 'Keep up the good work!';
 

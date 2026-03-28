@@ -5,9 +5,9 @@
 // School info (fixed)
 const schoolConfig = {
     schoolName: "The National Educators school system 335 W/B",
-    session: "2024-2025",
+    session: "2025-2026",
     examType: "Annual Exam",
-    examDate: "2025-03-15",
+    
     passPercentage: 40
 };
 
